@@ -11,9 +11,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    //Player 액티비티와 adapter를 공유하기 위해 static으로 선언했다.
+    //이게 최선인지 고민을 해볼 필요가 있다.
+    //public static MusicAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
                 //2.2 프로그램 실행
                 init();
             } else {
-                Toast.makeText(this, "권한을 허용하지 않으면 프로그램을 실행할 수 없습니다.", Toast.LENGTH_SHORT).show();// 사용자가 거절하는 경우가 많으므로 알려주는 문구를 넣어주어야 한다.
+
+                Message.show("권한을 허용하지 않으시면 프로그램을 실행할 수 없습니다.",this);// 사용자가 거절하는 경우가 많으므로 알려주는 문구를 넣어주어야 한다.
                 // 선택 : 1 종료, 2 권한체크 다시 물어보기
                 // checkPermission();
                 finish();
@@ -72,17 +78,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void init(){
-        Toast.makeText(this, "프로그램을 실행합니다", Toast.LENGTH_SHORT).show();
-        //3.1 데이터를 불러온다
-        DataLoader loader = new DataLoader(this);
-        loader.load();
-        ArrayList<Music> datas = loader.get();
+    private void init() {
 
+        Message.show("프로그램을 실행합니다.", this);
+
+        listInit();
+    }
+
+    private void listInit() {
         //3.2라사이클 뷰
         RecyclerView listView = (RecyclerView) findViewById(R.id.listView);
-        MusicAdapter adapter = new MusicAdapter(datas, this);
+        MusicAdapter adapter = new MusicAdapter(this);
         listView.setAdapter(adapter);
         listView.setLayoutManager(new LinearLayoutManager(this));
     }
 }
+
+
+
