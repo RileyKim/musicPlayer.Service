@@ -4,19 +4,26 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Message;
+
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+
 import java.util.List;
+
+import static com.taeksukim.android.musicplayer.App.ACTION_PLAY;
+import static com.taeksukim.android.musicplayer.App.PAUSE;
+import static com.taeksukim.android.musicplayer.App.PLAY;
+import static com.taeksukim.android.musicplayer.App.STOP;
+import static com.taeksukim.android.musicplayer.App.playStatus;
+import static com.taeksukim.android.musicplayer.App.player;
+import static com.taeksukim.android.musicplayer.App.position;
 
 
 public class PlayerActivity extends AppCompatActivity {
@@ -26,27 +33,19 @@ public class PlayerActivity extends AppCompatActivity {
     List<Music> datas;
     PlayerAdapter adapter;
 
-    MediaPlayer player;
+
     SeekBar seekBar;
     TextView txtDuration,txtCurrent;
 
-    //플레이어 상태 플래그
-    private static final int PLAY = 0;
-    private static final int PAUSE = 1;
-    private static final int STOP = 2;
+    Intent service;
 
-    //현재 플레이어 상태
-    private static int playStatus = STOP;
-
-    // 현재 음악 위치
-    int position = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
-        playStatus = STOP;
+        service = new Intent(this, PlayerService.class);
 
         // 볼륨 조절 버튼으로 미디어 음량만 조절하기 위한 설정
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -136,39 +135,36 @@ public class PlayerActivity extends AppCompatActivity {
         // 플레이중이 아니면 음악 실행
         switch(playStatus) {
             case STOP:
-                playStop();
+                playStart();
                 break;
             // 플레이중이면 멈춤
             case PLAY :
-                playPlay();
+                playPause();
                 break;
             // 멈춤상태이면 거기서 부터 재생
             case PAUSE:
-                playPause();
+                playRestart();
                 break;
         }
     }
 
-    private void playStop(){
-        player.start();
+    private void playStart(){
 
-        playStatus = PLAY;
+        service.setAction(ACTION_PLAY); // 서비스 측으로 명령어를 보내준다.
+        startService(service);
         btnPlay.setImageResource(android.R.drawable.ic_media_pause);
         // 새로운 쓰레드로 스타트
         Thread thread = new TimerThread();
         thread.start();
     }
 
-    private void playPlay(){
-        player.pause();
-        playStatus = PAUSE;
+    private void playPause(){
+
         btnPlay.setImageResource(android.R.drawable.ic_media_play);
     }
 
-    private void playPause(){
-        player.start();
+    private void playRestart(){
 
-        playStatus = PLAY;
         btnPlay.setImageResource(android.R.drawable.ic_media_pause);
     }
 
@@ -193,10 +189,7 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(player != null){
-            player.release(); // 사용이 끝나면 해제해야만 한다.
-        }
-        playStatus = STOP;
+
     }
 
     // 버튼 클릭 리스너
@@ -227,7 +220,7 @@ public class PlayerActivity extends AppCompatActivity {
         @Override
         public void onPageSelected(int position) {
             Logger.print("onPageSelected ======== 들어왔어요~~~","ViewPager Listener");
-            PlayerActivity.this.position = position;
+            App.position = position;
             init();
         }
 
